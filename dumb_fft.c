@@ -1,10 +1,10 @@
 #include <stdio.h>
-#include <math.h>     /* cos, sin, M_PI */
+#include <math.h>     /* cos, sin */
 #include <time.h>     /* clock_t, clock() */
 
-void fft(int N, int *src, float *re_dst, float *im_dst);
+void fft(int N, int *src, double *re_dst, double *im_dst);
 
-void naive_fft(int N, int *src, float *re_dst, float *im_dst);
+void naive_fft(int N, int *src, double *re_dst, double *im_dst);
 
 int main(int argc, char **argv) {
 
@@ -24,26 +24,26 @@ int main(int argc, char **argv) {
   for (i=1; i<N; i++)
     input[i] = 2*input[i-1];
 
-  float output[2*N];	/* Eventually the result should be in a single array */
-  float im_sol[N];		/* Store imaginary parts here for now */
+  double output[2*N];	/* Eventually the result should be in a single array */
+  double im_sol[N];		/* Store imaginary parts here for now */
   output[0] = 0, output[N/2] = 0;
   
   /* Time etc */
   clock_t start, end;
-  float time, ref_time, re_err, im_err;
-  float cmp_re_out[N], cmp_im_out[N];
+  double time, ref_time, re_err, im_err;
+  double cmp_re_out[N], cmp_im_out[N];
 
   /* Reference calculation */
   start = clock();
   naive_fft(N, input, cmp_re_out, cmp_im_out);
   end = clock();
-  ref_time = (float)(end-start)/CLOCKS_PER_SEC;
+  ref_time = (double)(end-start)/CLOCKS_PER_SEC;
 
   /* FFT calculation */
   start = clock();
   fft(N, input, output, im_sol);
   end = clock();
-  time = (float)(end-start)/CLOCKS_PER_SEC;
+  time = (double)(end-start)/CLOCKS_PER_SEC;
 
   /* Print results */
   printf("\nResults: (errors in parentheses)\n\n");
@@ -59,21 +59,33 @@ int main(int argc, char **argv) {
   return 0;
 }
 
-/*
- * Precalculate some constants, load values,
- * perform computations, store results.
- */
-void fft(int N, int *src, float *re_dst, float *im_dst) {
+/* Cooley-Tukey FFT accepting even-length
+ * sequence of integers. */
+void fft(int N, int *src, double *re_dst, double *im_dst) {
 
-  const float TWOPI = 2*M_PI;	/* This is "hardware" */
+  /* Constant */
+  const double TWOPI = 2*3.14159265358979323846;
+  
+  /* Registers */
+	int k, m;
+	double E_re, E_im, O_re, O_im;
+  double tw_re, tw_im;	/* twiddle factor */
+  double tmp_re, tmp_im;
+  double c_curr_outer, c_curr_inner, c_tmp;
+  double s_curr_outer, s_curr_inner, s_tmp;
+  double c_init = 1; /* cos(0*4pi/N) */
+  double s_init = 0; /* sin(0*4pi/N) */
+  double tw_re_init = 1;	/* cos(0*2pi/N) */
+  double tw_im_init = 0;	/* sin(0*2pi/N) */
+  
+  /* Input-dependent constants */
   const int N_2 = N/2;
-  float E_re, E_im, O_re, O_im;
-  float tw_re, tw_im;
-  float tmp_re, tmp_im;
-  int k, m;
-
-  float ftmp;
-
+  const double TWOPI_N = TWOPI/N;
+  const double c2pi_N = cos(TWOPI_N);
+  const double s2pi_N = sin(TWOPI_N);
+	const double c4pi_N = c2pi_N*c2pi_N - s2pi_N*s2pi_N;
+	const double s4pi_N = 2*c2pi_N*s2pi_N;
+	
   /* The special cases k=0, k=N/2 */
   for (m=0; m<N-1; m+=2) {
     re_dst[0] += src[m]+src[m+1];
@@ -84,23 +96,39 @@ void fft(int N, int *src, float *re_dst, float *im_dst) {
   /* Remaining cases */
   for (k=1; k<N_2; k++) {
 
-    ftmp = TWOPI*k/N;
-    E_re = 0, E_im = 0, O_re = 0, O_im = 0;
+    /* Update outer and inner */
+    c_curr_outer = c_init*c4pi_N - s_init*s4pi_N;
+    s_curr_outer = s_init*c4pi_N + c_init*s4pi_N;
+    c_curr_inner = c_curr_outer, s_curr_inner = s_curr_outer;
+    c_init = c_curr_outer, s_init = s_curr_outer;
+		
+    /* Initialize E,O summands */
+		E_re = src[0], E_im = 0, O_re = src[1], O_im = 0;
 
-    for (m=0; m<N_2; m++) {
-      E_re += src[2*m]*cos(2*m*ftmp);
-      E_im -= src[2*m]*sin(2*m*ftmp);
+    for (m=1; m<N_2; m++) {
 
-      O_re += src[2*m+1]*cos(2*m*ftmp);
-      O_im -= src[2*m+1]*sin(2*m*ftmp);
+    	/* Calculate E,O summands */
+      E_re += src[2*m]*c_curr_inner;
+			E_im -= src[2*m]*s_curr_inner;
+			O_re += src[2*m+1]*c_curr_inner;
+			O_im -= src[2*m+1]*s_curr_inner;
+
+			/* Update inner */
+			c_tmp = c_curr_inner, s_tmp = s_curr_inner;
+			c_curr_inner = c_tmp*c_curr_outer - s_tmp*s_curr_outer;
+			s_curr_inner = s_tmp*c_curr_outer + c_tmp*s_curr_outer;
     }
-
-    tw_re = cos(ftmp);
-    tw_im = -sin(ftmp);
-
+    
+		/* Update twiddle factor */
+    tw_re = tw_re_init*c2pi_N - (-tw_im_init)*s2pi_N;
+    tw_im = -((-tw_im_init)*c2pi_N + tw_re_init*s2pi_N);
+    tw_re_init = tw_re, tw_im_init = tw_im;
+    
+    /* Multiply O by twiddle factor */
     tmp_re = tw_re*O_re - tw_im*O_im;
     tmp_im = tw_re*O_im + tw_im*O_re;
 
+    /* Calculate final result */
     re_dst[k] = E_re + tmp_re;
     im_dst[k] = E_im + tmp_im;
     re_dst[k+N_2] = E_re - tmp_re;
@@ -108,7 +136,7 @@ void fft(int N, int *src, float *re_dst, float *im_dst) {
   }
 }
 
-void naive_fft(int N, int *src, float *re_dst, float *im_dst) {
+void naive_fft(int N, int *src, double *re_dst, double *im_dst) {
 	int k,m;
 	for (k=0; k<N; k++) {
 		re_dst[k] = 0;
