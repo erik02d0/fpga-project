@@ -23,8 +23,10 @@
 module fft_tb # 
     (
         parameter integer ARRAY_SIZE = 2,
-        parameter integer DATA_WIDTH = 32        
-        
+        parameter integer DATA_WIDTH = 32,
+
+        parameter integer TEST_CASES = 10
+
     )
     (
 
@@ -55,8 +57,13 @@ module fft_tb #
     integer count;
     integer temp_counter;
     
+    integer test_case; // Stores current test case being run
     integer A [0 : ARRAY_SIZE-1];
     integer B [0 : ARRAY_SIZE-1];
+    integer T_A [0 : TEST_CASES]; // List of test cases used as first  term in the addition
+    integer T_B [0 : TEST_CASES]; // List of test cases used as second term in the addition
+    //integer R; // Used to store the current test case's expected result for easy comparison in the waveform view
+    
     integer RSW ;
     integer RHW ;
     
@@ -82,62 +89,110 @@ module fft_tb #
         #10 s00_axi_aclk = ~s00_axi_aclk;
         
     initial begin
-        s00_axi_aclk = 1;
-        s00_axi_aresetn = 0;
-        s00_axis_tdata = 0;
-        s00_axis_tstrb = 4'hf;
-        s00_axis_tlast = 0;
-        s00_axis_tvalid = 0;
-        m00_axis_tready = 0;
-        start = 0;
-        row = 0;
+        T_A[0] = 32'd0;
+        T_B[0] = 32'd0;
+        //T_R[0] = 32'd0;
         
-        count = 0;
-        temp_counter= 0;
+        T_A[1] = 32'b01000000010010010000111111011011; // pi
+        T_B[1] = 32'b11000000010010010000111111011011; // -pi
+        //T_R[1] = 32'b00000000000000000000000000000000; // 0.0
         
-        // initialise the matrices; for debug use $urandom%10 to have unsigned values less than 10;
-        for (row = 0; row < ARRAY_SIZE; row = row + 1)    
-                A [row] = $urandom;
+        T_A[2] = 32'b01000010111101101110100101111001; // 123.456
+        T_B[2] = 32'b01000010110111100011100011010101; // 111.111
+        //T_R[2] = 32'b01000011011010101001000100100110; //
+        /*
+        
+        T_A[3] = 32'b; //
+        T_B[3] = 32'b; //
+        T_R[3] = 32'b; //
+        
+        T_A[4] = 32'b; //
+        T_B[4] = 32'b; //
+        T_R[4] = 32'b; //
+        
+        T_A[5] = 32'b; //
+        T_B[5] = 32'b; //
+        T_R[5] = 32'b; //
+        
+        T_A[6] = 32'b; //
+        T_B[6] = 32'b; //
+        T_R[6] = 32'b; //
+        
+        T_A[7] = 32'b; //
+        T_B[7] = 32'b; //
+        T_R[7] = 32'b; //
+        
+        T_A[8] = 32'b; //
+        T_B[8] = 32'b; //
+        T_R[8] = 32'b; //
+        
+        T_A[9] = 32'b; //
+        T_B[9] = 32'b; //
+        T_R[9] = 32'b; //
+        
+        T_A[10] = 32'b; //
+        T_B[10] = 32'b; //
+        T_R[10] = 32'b; //*/
+        
+        for (test_case = 0; test_case < TEST_CASES; test_case = test_case + 1) begin
+            s00_axi_aclk = 1;
+            s00_axi_aresetn = 0;
+            s00_axis_tdata = 0;
+            s00_axis_tstrb = 4'hf;
+            s00_axis_tlast = 0;
+            s00_axis_tvalid = 0;
+            m00_axis_tready = 0;
+            start = 0;
+            row = 0;
             
-        #20
-        s00_axi_aresetn = 1;
-        count = 0;
-        
-        // send the two matrices using the AXI Stream protocol
-        
-        #20
-        s00_axis_tvalid = 1;
-        for (row = 0; row < ARRAY_SIZE; row = row + 1) begin
+            count = 0;
+            temp_counter= 0;
+            
+            A[0] = T_A[test_case];
+            A[1] = T_B[test_case];
                 
-            s00_axis_tdata = A [row];
-            if (row == ARRAY_SIZE-1)
-                s00_axis_tlast = 1;
-            #20;
-                // wait until the slave is ready to read the data
-            while (!s00_axis_tready) begin
-                #20;
-            end  
-        end
+            #20
+            s00_axi_aresetn = 1;
+            count = 0;
             
-        s00_axis_tlast = 0;
-        s00_axis_tvalid = 0;
-        
-        // start the accelerator
-        #20
-        start = 1;
-        #20
-        start = 0;
-        
-        m00_axis_tready = 1;
-        
-        while (!m00_axis_tlast) begin
-            #20;
-            if(m00_axis_tready == 1 && m00_axis_tvalid == 1) begin
-                RHW = m00_axis_tdata;
+            // send the two matrices using the AXI Stream protocol
+            
+            #20
+            s00_axis_tvalid = 1;
+            for (row = 0; row < ARRAY_SIZE; row = row + 1) begin
+                    
+                s00_axis_tdata = A [row];
+                if (row == ARRAY_SIZE-1)
+                    s00_axis_tlast = 1;
+                #20;
+                    // wait until the slave is ready to read the data
+                while (!s00_axis_tready) begin
+                    #20;
+                end  
             end
-        end
-        m00_axis_tready = 0;
-               
+                
+            s00_axis_tlast = 0;
+            s00_axis_tvalid = 0;
+            
+            // start the accelerator
+            #20
+            start = 1;
+            #20
+            start = 0;
+            
+            m00_axis_tready = 1;
+            
+            while (!m00_axis_tlast) begin
+                #20;
+                if(m00_axis_tready == 1 && m00_axis_tvalid == 1) begin
+                    RHW = m00_axis_tdata;
+                end
+            end
+            m00_axis_tready = 0;
+            
+            # 40;
+                   
+       end
        $stop;
        
     end

@@ -177,8 +177,14 @@ module fft #
                 
             end
             else if (Exp_AB_sub == 0) begin
-                A_Mant[26:0] <= {1'b1, operand_A [22:0], 3'b000};
-                B_Mant[26:0] <= {1'b1, operand_B [22:0], 3'b000};
+                if(operand_A[31:0] == 32'b0)
+                    A_Mant[26:0] <= 27'b0;
+                else    
+                    A_Mant[26:0] <= {1'b1, operand_A [22:0], 3'b000};
+                if(operand_B[31:0] == 32'b0)
+                    B_Mant[26:0] <= 27'b0;
+                else
+                    B_Mant[26:0] <= {1'b1, operand_B [22:0], 3'b000};
                 R_exp <= operand_A [30:23];
                 
             end    
@@ -331,6 +337,15 @@ module fft #
                 else if(R_Mant[1]) begin
                     R_exp <= R_exp - 25;
                     R_Mant <= R_Mant << 25;
+                end
+                else if(R_Mant[0]) begin
+                    R_exp <= R_exp -26;
+                    R_Mant <= R_Mant << 26;
+                end
+                else begin
+                    R_exp <= 8'b0;
+                    R_Mant <= 27'b0;
+                  
                 end
                                                                                                 
             end
