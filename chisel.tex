@@ -1,0 +1,166 @@
+\documentclass{beamer}
+
+\usepackage[latin1]{inputenc}
+\usepackage{booktabs}
+
+\usetheme{Warsaw}
+
+\title{Chisel HDL}
+\author{Ho-Sung Lee, Erik Vesterlund, Andreas Wennerberg}
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}
+\begin{itemize}
+
+\item Developed by UC Berkeley researchers ca 2012
+
+\item Chisel is embedded in Scala
+
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+
+Scala is a GP strongly typed programming language, including support for OOP and functional programming. Scala compiles to Java bytecode.
+
+\end{frame}
+
+\begin{frame}
+\begin{itemize}
+
+\item Embedding Chisel in Scala raises the level of hardware design abstraction by providing concepts including object orientation, functional programming, parameterized types, and type inference.
+
+\item Chisel can generate a high-speed C++-based cycle-accurate software simulator, or low-level Verilog designed to map to either FPGAs or to a standard ASIC flow for synthesis.
+
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\begin{itemize}
+
+\item VHDL and Verilog were designed to be used for simulation, not synthesis
+
+\item VHDL and Verilog lack the powerful abstraction facilities that are common in modern software languages.
+
+\item To work around these limitations one can use another language (e.g. Perl) as a macro processing language for an underlying HDL; alternatively, begin from a domain-specific application programming langugage from which a hardware block is generated.
+
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\begin{itemize}
+
+\item The approach of combining VHDL or Verilog with another language is cumbersome, combining the poor abstraction facilities of the underlying HDL with a completely different high-level programming model that does not understand hardware types and semantics.
+
+\item The approach of using a domain-specific langugage provides great designer productivity when the task in hand matches the pattern encoded in the application programming model, but are a poor match for tasks outside their domain.
+
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\begin{itemize}
+
+\item Chisel is intended to be a simple platform that provides modern programming language features for accurately specifying low-level hardware blocks, but which can be readily extended to capture many useful high-level hardware design patterns.
+
+\item By using a flexible platform, each module in a project can employ whichever design pattern best fits that design, and designers can freely combine multiple modules regardless of their programming model.
+
+\item Chisel can generate fast cycle-accurate C++ simulators for a design, or generate low-level Verilog suitable for either FPGA emulation or ASIC synthesis with standard tools.
+
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\begin{itemize}
+
+\item The basic Chisel datatypes are used to specify the type of values held in state elements or flowing on wires. (The \texttt{Bits}, \texttt{Fix}, \texttt{UFix} and other datatypes are distinct from Scala's builtin types.)
+
+\item Circuits are represented as graphs of nodes. Each node is a hardware operator that has zero or more inputs and that drives one output.
+
+\item Chisel "components" are similar to Verilog modules
+
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\begin{itemize}
+
+\item Abstraction is an important aspect of Chisel.
+
+\item Abstraction allows users to coveniently create reusable objects and functions, to define their own data types, and to better capture particular design patterns by writing their own domain-specific languages on top of Chisel.
+
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\begin{itemize}
+
+\item A key motivation for embedding Chisel in Scala is to support highly parameterized circuit generators, a weakness of traditional HDLs.
+
+\item Chisel also supports recursive creation of hardware subsystems. Verilog is not able to describe this type of recursion.
+
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\begin{itemize}
+
+\item Fast simulation is crucial to reduce hardware development time. Custom logic simulation engines can provide fast cycle-accurate simulation, but are generally too expensive to be used by individual designers.
+
+\item The Chisel compiler produces a C++ class for each Chisel design, with a C++ interface including clock-low and clock-high methods.
+
+\item Simulator code generation is based on templated C++ multiword bit-vector runtime library that executes all the basic Chisel operators.
+
+\item Overhead is removed for the case where the RTL bit vector fits into the host machine's native word size.
+
+\item As much branching as possible is removed so as to best utilize ILP and minimize the number of stalls.
+
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\begin{itemize}
+
+\item A 3-stage 32-bit RISC processor was written in 3020 lines of Verilog, and only 1046 lines of Chisel.
+
+\item Chisel produced less logic and total area than Verilog.
+
+\item Simulation was sped up by a factor of 8.
+
+\end{itemize}
+\end{frame}
+
+%%%%%%%%%%%%%%% SOURCES
+\begin{thebibliography}{9}
+
+\bibitem{tagForThisEntry}
+	J. Bachrach et al,
+	\emph{Chisel: Constructing Hardware in a Scala Embedded Language},
+	2012
+
+\end{thebibliography}
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
