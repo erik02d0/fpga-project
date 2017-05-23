@@ -59,10 +59,11 @@ module fft_tb #
     
     integer test_case; // Stores current test case being run
     integer A [0 : ARRAY_SIZE-1];
-    integer B [0 : ARRAY_SIZE-1];
     integer T_A [0 : TEST_CASES]; // List of test cases used as first  term in the addition
     integer T_B [0 : TEST_CASES]; // List of test cases used as second term in the addition
-    //integer R; // Used to store the current test case's expected result for easy comparison in the waveform view
+    integer T_R [0 : TEST_CASES]; // List of expected results for the test cases (T_A[i] + T_B[i] == T_R[i])
+    integer R; // Used to store the current test case's expected result for easy comparison in the waveform view
+    reg test_result_correct;
     
     integer RSW ;
     integer RHW ;
@@ -91,33 +92,29 @@ module fft_tb #
     initial begin
         T_A[0] = 32'd0;
         T_B[0] = 32'd0;
-        //T_R[0] = 32'd0;
+        T_R[0] = 32'd0;
         
         T_A[1] = 32'b01000000010010010000111111011011; // pi
         T_B[1] = 32'b11000000010010010000111111011011; // -pi
-        //T_R[1] = 32'b00000000000000000000000000000000; // 0.0
+        T_R[1] = 32'b00000000000000000000000000000000; // 0.0
         
-        T_A[2] = 32'b01000010111101101110100101111001; // 123.456
-        T_B[2] = 32'b01000010110111100011100011010101; // 111.111
-        //T_R[2] = 32'b01000011011010101001000100100110; //
+        T_A[2] = 32'b01000010111101101110100101111001;  //  123.456001
+        T_B[2] = 32'b01000010110111100011100011010101;  //  111.111000
+        T_R[2] = 32'b01000011011010101001000100100111;  //  234.567001
+        
+        T_A[3] = 32'b11000010111101101110100101111001;  // -123.456001
+        T_B[3] = 32'b01000010110111100011100011010101;  //  111.111000
+        T_R[3] = 32'b11000001010001011000010100100000;  // -12.345001
+        
+        T_A[4] = 32'b01000010111101101110100101111001;  //  123.456001
+        T_B[4] = 32'b11000010110111100011100011010101;  // -111.111000
+        T_R[4] = 32'b01000001010001011000010100100000;  //  12.345001
+        
+        T_A[5] = 32'b11000010111101101110100101111001;  // -123.456001
+        T_B[5] = 32'b11000010110111100011100011010101;  // -111.111000
+        T_R[5] = 32'b11000011011010101001000100100111;  // -234.567001
+
         /*
-        
-        T_A[3] = 32'b; //
-        T_B[3] = 32'b; //
-        T_R[3] = 32'b; //
-        
-        T_A[4] = 32'b; //
-        T_B[4] = 32'b; //
-        T_R[4] = 32'b; //
-        
-        T_A[5] = 32'b; //
-        T_B[5] = 32'b; //
-        T_R[5] = 32'b; //
-        
-        T_A[6] = 32'b; //
-        T_B[6] = 32'b; //
-        T_R[6] = 32'b; //
-        
         T_A[7] = 32'b; //
         T_B[7] = 32'b; //
         T_R[7] = 32'b; //
@@ -150,6 +147,8 @@ module fft_tb #
             
             A[0] = T_A[test_case];
             A[1] = T_B[test_case];
+            R    = T_R[test_case];
+            test_result_correct = 1'bx;
                 
             #20
             s00_axi_aresetn = 1;
@@ -189,6 +188,8 @@ module fft_tb #
                 end
             end
             m00_axis_tready = 0;
+            
+            test_result_correct = RHW == R;
             
             # 40;
                    
