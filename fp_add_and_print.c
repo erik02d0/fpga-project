@@ -7,6 +7,14 @@ unsigned int float_to_uint32(float fval) {
 	return *(unsigned int *)&fval;
 }
 
+void uint32_to_binary_string(unsigned int ival, char * buffer) {
+	char bit;
+	for (int i = 0; i < 32; i++) {
+		bit = (ival >> (31 - i)) & 1;
+		buffer[i] = '0' + bit;
+	}
+}
+
 int main(int argc, char * argv[]) {
 	if (sizeof(unsigned int) != 4) {
 		fprintf(stderr, "sizeof(unsigned int) != 4\n");
@@ -28,7 +36,15 @@ int main(int argc, char * argv[]) {
 	unsigned int ival_b = float_to_uint32(fval_b);
 	unsigned int ival_r = float_to_uint32(fval_r);
 
-	printf(" %08x   %f\n+%08x  +%f\n=%08x  =%f\n", ival_a, fval_a, ival_b, fval_b, ival_r, fval_r);
+	char bitstr_a [32];  uint32_to_binary_string(ival_a, bitstr_a);
+	char bitstr_b [32];  uint32_to_binary_string(ival_b, bitstr_b);
+	char bitstr_r [32];  uint32_to_binary_string(ival_r, bitstr_r);
+
+	printf(
+		"T_A[] = 32'b%.32s;  // % f (%08x)\n"
+		"T_B[] = 32'b%.32s;  // % f (%08x)\n"
+		"T_R[] = 32'b%.32s;  // % f (%08x)\n",
+		bitstr_a, fval_a, ival_a, bitstr_b, fval_b, ival_b, bitstr_r, fval_r, ival_r);
 	
 	return EXIT_SUCCESS;
 }
