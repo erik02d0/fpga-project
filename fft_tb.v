@@ -68,7 +68,7 @@ module fft_tb #
     integer RSW ;
     integer RHW ;
     
-    fft # (
+    Fp_adder # (
     .SIZE(ARRAY_SIZE),
     .DATA_WIDTH(DATA_WIDTH)
     ) accelerator (
