@@ -60,7 +60,6 @@ module Fp_adder #
     reg start_transfer;
     reg transfer;          // accelerator is transferring the results back
 
-    reg ready;
     reg compare_exp; //compare the exponents and shift the mantissa
     reg addition;   // add two mantissa
     reg normalizing; 
@@ -90,7 +89,7 @@ module Fp_adder #
     reg add_overflow;
     reg round_overflow;
     
-    assign s00_axis_tready = !busy  && !transfer;
+    assign s00_axis_tready = !busy  && !transfer && !start_transfer;
     
     always @ (posedge s00_axi_aclk) begin
         if(!s00_axi_aresetn || busy)
@@ -108,7 +107,7 @@ module Fp_adder #
             operand_A <= mem_A [addr_A-1];
             operand_B <= mem_A[addr_A];
         end
-        else if(ready) begin
+        else if(item_done) begin
             operand_A <= mem_A[addr_A];
             operand_B <= mac;
         end
@@ -125,7 +124,7 @@ module Fp_adder #
     always @ (posedge s00_axi_aclk) begin
         if (!s00_axi_aresetn || round_normalizing) 
             compare_exp <= 0;
-        else if (busy && !result_done && !item_done) 
+        else if (busy && !result_done) 
             compare_exp <= 1'b1;
     end
     always @ (posedge s00_axi_aclk) begin
@@ -158,13 +157,6 @@ module Fp_adder #
         else if (round_normalizing) 
             item_done <= 1'b1;
     end
-    always @ (posedge s00_axi_aclk) begin
-        if(!s00_axi_aresetn || ready)  
-            ready <= 0;
-        else if (item_done)
-            ready <= 1;
-    end
-    
     // get Exp_A - Exp_B
     assign Exp_AB_sub = operand_A[30:23] - operand_B[30:23];
     
@@ -386,11 +378,13 @@ module Fp_adder #
         //------------------------------------------------------------------------------- considering overflow during rounding
         if(round_normalizing && !item_done) begin
             if(round_overflow) begin
-                result_Mant <= result_Mant >>1;
-                result_exp <= R_exp + 1;
+                mac <= {result_sign,(R_exp+1),(result_Mant >> 1)};
+                //result_Mant <= result_Mant >>1;
+                //result_exp <= R_exp + 1;
             end
             else
-                result_exp <= R_exp;
+                mac <= {result_sign, R_exp, result_Mant};
+                //result_exp <= R_exp;
             
         end
     end
@@ -405,17 +399,10 @@ module Fp_adder #
     always @ (posedge s00_axi_aclk) begin
         if (!s00_axi_aresetn || transfer) 
             result_done <= 0;
-        else if (addr_A ==SIZE-1 && item_done) 
+        else if (addr_A ==SIZE-1 && round_normalizing) 
             result_done <= 1'b1;
     end
             
-    always @ (posedge s00_axi_aclk) begin
-        if(!s00_axi_aresetn || transfer)
-            mac <= 0;
-        else if(item_done) 
-            mac <= {result_sign,result_exp,result_Mant};
-    end
-    
     always @ (posedge s00_axi_aclk) begin
         if (!s00_axi_aresetn || transfer) 
             start_transfer <= 0; 
@@ -437,3 +424,4 @@ module Fp_adder #
     assign m00_axis_tlast = transfer && m00_axis_tready;
     
 endmodule
+
