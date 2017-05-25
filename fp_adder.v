@@ -48,17 +48,18 @@ module Fp_adder #
      input wire start
     );
     
-    reg [SIZE-1 : 0] addr_stream_in;    // address used to fill in matrix A
+    reg [SIZE-1 : 0] addr_stream_in;    // address used to fill in array(mem_A)
     
-    reg [SIZE-1 : 0] addr_A;   // address used to read  from matrix A
+    reg [SIZE-1 : 0] addr_A;   // address used to read  from Array(mem_A)
     
         
     reg busy;              // Accelerator is busy computing   
-    reg [DATA_WIDTH-1 : 0] mem_A [0 : SIZE-1]; // BRAM for matrix A
+    reg [DATA_WIDTH-1 : 0] mem_A [0 : SIZE-1]; // BRAM for Array
     reg item_done;
-    reg result_done;         // one item of the result matrix is ready
+    reg result_done;         
+    reg start_transfer;
     reg transfer;          // accelerator is transferring the results back
-    reg last_transfer;
+
     reg ready;
     reg compare_exp; //compare the exponents and shift the mantissa
     reg addition;   // add two mantissa
@@ -169,7 +170,7 @@ module Fp_adder #
     
     always @ (posedge s00_axi_aclk) begin   
         //-------------------------------------------------------------------------------- compare exponent and shifting
-        if(compare_exp && !addition) begin
+         if(compare_exp && !addition) begin
             if (!Exp_AB_sub[DATA_WIDTH-1] && (Exp_AB_sub != 0)) begin // if Exp_A - Exp_B > 0
                 if(operand_A[31:0] == 32'b00000000000000000000000000000000)
                     A_Mant[26:0] <= {1'b0, operand_A [22:0], 3'b000}; //(1 + Mantissa(23)) + Guard,Round, Sticky bit(3)
@@ -206,6 +207,7 @@ module Fp_adder #
                 R_exp <= operand_A [30:23];
             end    
         end
+
         //---------------------------------------------------------------------------------------------- addition 
         if (addition && !normalizing) begin // addition of mantissa
             if(!operand_A[31] && !operand_B[31]) begin
@@ -401,32 +403,34 @@ module Fp_adder #
     end
     
     always @ (posedge s00_axi_aclk) begin
-        if (!s00_axi_aresetn || last_transfer) 
+        if (!s00_axi_aresetn || transfer) 
             result_done <= 0;
-        else if (addr_A ==SIZE-1 && round_normalizing) 
+        else if (addr_A ==SIZE-1 && item_done) 
             result_done <= 1'b1;
     end
             
     always @ (posedge s00_axi_aclk) begin
-        if(!s00_axi_aresetn)
+        if(!s00_axi_aresetn || transfer)
             mac <= 0;
         else if(item_done) 
             mac <= {result_sign,result_exp,result_Mant};
     end
     
+    always @ (posedge s00_axi_aclk) begin
+        if (!s00_axi_aresetn || transfer) 
+            start_transfer <= 0; 
+        else if (result_done)
+            start_transfer <= 1;
+    end
+    
     
     always @ (posedge s00_axi_aclk) begin
-        if (!s00_axi_aresetn || last_transfer) 
+        if (!s00_axi_aresetn || transfer) 
             transfer <= 0; 
-        else if (result_done)
+        else if (start_transfer && m00_axis_tready)
             transfer <= 1;
     end
-    always @ (posedge s00_axi_aclk) begin
-        if(!s00_axi_aresetn)
-            last_transfer <= 0;
-        else if (transfer && m00_axis_tready)
-            last_transfer <= 1;
-    end
+    
         
     assign m00_axis_tvalid = transfer;
     assign m00_axis_tdata = mac;
