@@ -4,7 +4,7 @@
 #include <time.h>      // clock_t, clock()
 
 // Compile and run with e.g.
-//     gcc fp-cpu.c && (for i in {1..1000000}; do echo $i; done) | ./a.out
+//     gcc fp_cpu.c && (for i in {1..1000000}; do echo $i; done) | ./a.out
 
 unsigned int float_to_uint32(float fval) {
 	// Tricking the compiler into type casting
