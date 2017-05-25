@@ -52,16 +52,18 @@
 \end{frame}
 
 \begin{frame}
+\frametitle{Design costs dominate}
 \begin{itemize}
 
-\item Embedding Chisel in Scala raises the level of hardware design abstraction by providing concepts including object orientation, functional programming, parameterized types, and type inference.
+\item Synthesis is slow (order of days) and expensive (proprietary tools in the millions per year)
 
-\item Chisel can generate a high-speed C++-based cycle-accurate software simulator, or low-level Verilog designed to map to either FPGAs or to a standard ASIC flow for synthesis.
+\item Design, testing and verification costs in the tens of millions
 
 \end{itemize}
 \end{frame}
 
 \begin{frame}
+\frametitle{What it does}
 \begin{itemize}
 
 \item Chisel is intended to be a simple platform that provides modern programming language features for accurately specifying low-level hardware blocks, but which can be readily extended to capture many useful high-level hardware design patterns.
@@ -69,6 +71,16 @@
 \item By using a flexible platform, each module in a project can employ whichever design pattern best fits that design, and designers can freely combine multiple modules regardless of their programming model.
 
 \item Chisel can generate fast cycle-accurate C++ simulators for a design, or generate low-level Verilog suitable for either FPGA emulation or ASIC synthesis with standard tools.
+
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\begin{itemize}
+
+\item Embedding Chisel in Scala raises the level of hardware design abstraction by providing concepts including object orientation, functional programming, parameterized types, and type inference.
+
+\item Chisel can generate a high-speed C++-based cycle-accurate software simulator, or low-level Verilog designed to map to either FPGAs or to a standard ASIC flow for synthesis.
 
 \end{itemize}
 \end{frame}
@@ -140,6 +152,12 @@
 	J. Bachrach et al,
 	\emph{Chisel: Constructing Hardware in a Scala Embedded Language},
 	2012
+
+\bibitem{tag2}
+	J. Bachrach,
+	\emph{Chisel Quick Tutorial},
+	1st RISC-V Workshop Proceedings,
+	2015
 
 \end{thebibliography}
 
