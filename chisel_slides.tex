@@ -22,7 +22,7 @@
 
 \item Chisel is embedded in the Scala programming language
 
-\item Scala is strongly typed with support for OOP and functional programming. Compiles to Java bytecode
+\item Scala is strongly typed with support for OOP and functional programming. Runs on JVM
 
 \end{itemize}
 \end{frame}
@@ -31,11 +31,11 @@
 \frametitle{Why? (1/2)}
 \begin{itemize}
 
-\item VHDL and Verilog were designed to be used for simulation, not synthesis
+\item VHDL and Verilog were designed for simulation, not synthesis
 
-\item VHDL and Verilog lack the powerful abstraction facilities that are common in modern software languages.
+\item VHDL and Verilog lack the powerful abstraction facilities common in modern software languages
 
-\item To work around these limitations one can use another language (e.g. Perl) as a macro processing language for an underlying HDL; alternatively, begin from a domain-specific application programming langugage from which a hardware block is generated.
+\item Workaround: use SW language for macro processing together with HDL, or generate HW using DSL
 
 \end{itemize}
 \end{frame}
@@ -44,9 +44,13 @@
 \frametitle{Why? (2/2)}
 \begin{itemize}
 
-\item The approach of combining VHDL or Verilog with another language is cumbersome, combining the poor abstraction facilities of the underlying HDL with a completely different high-level programming model that does not understand hardware types and semantics.
+\item HDL+SW language combines poor abstraction of HDL with completely different programming model
 
-\item The approach of using a domain-specific langugage provides great designer productivity when the task in hand matches the pattern encoded in the application programming model, but are a poor match for tasks outside their domain.
+\item DSL increases productivity but only if task and DSL match well
+
+\item HDLs weak on circuit generators
+
+\item Verilog can't support recursive creation
 
 \end{itemize}
 \end{frame}
@@ -55,9 +59,11 @@
 \frametitle{Design costs dominate}
 \begin{itemize}
 
-\item Synthesis is slow (order of days) and expensive (proprietary tools in the millions per year)
+\item Synthesis is slow
 
-\item Design, testing and verification costs in the tens of millions
+\item Design, testing and verification are expensive
+
+\item Custom logic sim engines are fast but expensive
 
 \end{itemize}
 \end{frame}
@@ -66,81 +72,59 @@
 \frametitle{What it does}
 \begin{itemize}
 
-\item Chisel is intended to be a simple platform that provides modern programming language features for accurately specifying low-level hardware blocks, but which can be readily extended to capture many useful high-level hardware design patterns.
+\item Chisel a simple platform with modern language features, extensible
 
-\item By using a flexible platform, each module in a project can employ whichever design pattern best fits that design, and designers can freely combine multiple modules regardless of their programming model.
+\item Flexible platform, choose design pattern that best fits design
 
-\item Chisel can generate fast cycle-accurate C++ simulators for a design, or generate low-level Verilog suitable for either FPGA emulation or ASIC synthesis with standard tools.
+\item Embedding in Scala raises level of HW design abstraction
 
-\end{itemize}
-\end{frame}
-
-\begin{frame}
-\begin{itemize}
-
-\item Embedding Chisel in Scala raises the level of hardware design abstraction by providing concepts including object orientation, functional programming, parameterized types, and type inference.
-
-\item Chisel can generate a high-speed C++-based cycle-accurate software simulator, or low-level Verilog designed to map to either FPGAs or to a standard ASIC flow for synthesis.
+\item Can generate high-speed, cycle-accurate SW simulator, or Verilog for FPGA/ASIC
 
 \end{itemize}
 \end{frame}
 
 \begin{frame}
+\frametitle{Some details}
 \begin{itemize}
+\item Basic Chisel data types used to specify type of values. Types are distinct from Scala's built-ins
 
-\item The basic Chisel datatypes are used to specify the type of values held in state elements or flowing on wires. (The \texttt{Bits}, \texttt{Fix}, \texttt{UFix} and other datatypes are distinct from Scala's builtin types.)
+\item Circuits represented as graphs of nodes.
 
-\item Circuits are represented as graphs of nodes. Each node is a hardware operator that has zero or more inputs and that drives one output.
+\item "Components" are similar to Verilog modules
 
-\item Chisel "components" are similar to Verilog modules
+\item Recursive creation of subsystems
+
+\item One C++ class for each design
+
+\item Sim speed achieved by taking advantage of host architecture, and minimizing branches
 
 \end{itemize}
 \end{frame}
 
 \begin{frame}
+\frametitle{Promises}
 \begin{itemize}
+\item Up to $3\times$ greater code density.
 
-\item Abstraction is an important aspect of Chisel.
+\item "Smarter" output (less logic area and total area)
 
-\item Abstraction allows users to coveniently create reusable objects and functions, to define their own data types, and to better capture particular design patterns by writing their own domain-specific languages on top of Chisel.
+\item Up to $8\times$ faster simulations
 
+\item In practice: Not always that great
 \end{itemize}
 \end{frame}
 
+%%%%%%%%%%%%%% UNSORTED %%%%%%%%%
 \begin{frame}
 \begin{itemize}
 
-\item A key motivation for embedding Chisel in Scala is to support highly parameterized circuit generators, a weakness of traditional HDLs.
+\item 
 
-\item Chisel also supports recursive creation of hardware subsystems. Verilog is not able to describe this type of recursion.
+%\item Abstraction is an important aspect of Chisel.
 
-\end{itemize}
-\end{frame}
+%\item Abstraction allows users to coveniently create reusable objects and functions, to define their own data types, and to better capture particular design patterns by writing their own domain-specific languages on top of Chisel.
 
-\begin{frame}
-\begin{itemize}
-
-\item Fast simulation is crucial to reduce hardware development time. Custom logic simulation engines can provide fast cycle-accurate simulation, but are generally too expensive to be used by individual designers.
-
-\item The Chisel compiler produces a C++ class for each Chisel design, with a C++ interface including clock-low and clock-high methods.
-
-\item Simulator code generation is based on templated C++ multiword bit-vector runtime library that executes all the basic Chisel operators.
-
-\item Overhead is removed for the case where the RTL bit vector fits into the host machine's native word size.
-
-\item As much branching as possible is removed so as to best utilize ILP and minimize the number of stalls.
-
-\end{itemize}
-\end{frame}
-
-\begin{frame}
-\begin{itemize}
-
-\item A 3-stage 32-bit RISC processor was written in 3020 lines of Verilog, and only 1046 lines of Chisel.
-
-\item Chisel produced less logic and total area than Verilog.
-
-\item Simulation was sped up by a factor of 8.
+%\item Simulator code generation is based on templated C++ multiword bit-vector runtime library that executes all the basic Chisel operators.
 
 \end{itemize}
 \end{frame}
