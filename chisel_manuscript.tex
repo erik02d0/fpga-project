@@ -4,7 +4,7 @@
 
 \section{What}
 
-We're going to talk about Chisel - Constructing Hardware In a Scala Embedded Language. Chisel was developed at UC Berkeley around 2012 and is, like the acronym says, embedded in the Scala programming language. Scala is a strongly typed language with support for object-oriented programming and functional programming, and compiles to Java bytecode, i.e. runs on the Java Virtual Machine.
+We're going to talk about Chisel, which stands Constructing Hardware In a Scala Embedded Language. Chisel was developed at UC Berkeley around 2012 and is, like the acronym says, embedded in the Scala programming language. Scala is a strongly typed language with support for object-oriented programming and functional programming, and compiles to Java bytecode, meaning it runs on the Java Virtual Machine. Chisel has received funding from a number of major players, including Microsoft, Intel, Nvidia, Oracle, and others, as well as DARPA (ARPANET, VLSI, ...).
 
 \section{Why (1/2)}
 
@@ -14,9 +14,9 @@ Now, to work around these limitations, you can either use some other language (l
 
 \section{Why (2/2)}
 
-But, combining an HDL with another language is awkward and tricky, and only serves to combine the poor abstraction facilities of the underlying HDL with a completely different high-level programming model that doesn't understand hardware types and semantics. Abstraction is an important aspect of Chisel, because that is what makes it possible for users to conveniently create reusable objects and functions, to define their own data types, and to better capture particular design patterns by writing their own domain-specific languages on top of Chisel.
+But, combining an HDL with another language is awkward and tricky, and only serves to combine the poor abstraction facilities of the underlying HDL with a completely different high-level programming model that doesn't understand hardware types and semantics. Abstraction is an important aspect of Chisel, because that is what makes it possible for users to conveniently create reusable objects and functions, to define their own data types, and to better capture particular design patterns by writing their own domain-specific languages on top of Chisel - something the developers hope will lead to an explosion in languages and compilers.
 
-As for domain-specific languages, while they provide greater designer productivity, that's only if the task matches the pattern encoded in the application programming model.
+As for domain-specific languages as a fix, while they provide greater designer productivity, that's only if the task matches the pattern encoded in the application programming model.
 
 A key motivation for embedding Chisel in Scala is to support highly parameterized circuit generators, a weakness of traditional HDLs. Chisel also supports recursive creation of hardware subsystems. Verilog is not able to describe this type of recursion.
 
@@ -53,16 +53,6 @@ The speed of generated simulators is due to using the host machine's architectur
 The creators of Chisel have highlighted designs where the necessary Chisel code was a third of the "equivalent" Verilog code: a $3$-stage, $32$-bit RISC processor was written in $3020$ lines of Verilog but only $1046$ lines of Chisel. Also, the Chisel-generated circuitry produced less logic area and total area, and simulation times were down by a factor of $8$.
 
 However, a different team did not see much of these improvements in writing a financial asset volatility accelerator, getting only $30\%$ less code (compared to the VHDL version) and about the same amount of hardware. Simulation with embedded IP cores has also proved difficult.
-
-\section{unsorted material}
-
-Abstraction is an important aspect of Chisel.
-
-Abstraction allows users to conveniently create reusable objects and functions, to define their own data types, and to better capture particular design patterns by writing their own domain-specific languages on top of Chisel.
-
-%Simulator code generation is based on templated C++ multiword bit-vector runtime library that executes all the basic Chisel operators.
-
-
 
 \end{document}
 
